@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scientific Calculator — Beautiful Tailwind Design</title>
+  <!-- Tailwind Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* small extra polish */
+    html, body { height: 100%; }
+    .glass { background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); backdrop-filter: blur(6px); }
+    .btn-safe:active { transform: translateY(1px); }
+    pre.history { max-height: 180px; overflow:auto; }
+  </style>
+</head>
+<body class="bg-indigo-950 to-slate-800 text-gray-100 min-h-screen flex items-center justify-center p-6">
+  <!-- <div class="w-full bg-gray-800 max-w-3xl mx-auto"> -->
+  
+   
+      <!-- Calculator -->
+      <section class="md:col-span-2 glass p-5 rounded-2xl shadow-2xl">
+        <div class="flex flex-col gap-4">
+          <!-- display -->
+          <div class="bg-gradient-to-r from-slate-800/70 to-slate-900/50 rounded-xl p-3">
+            <div id="display" class="min-h-[64px] text-right text-3xl font-mono pr-3 break-words">0</div>
+            <div id="subDisplay" class="text-right text-sm text-slate-400 mt-1 font-mono pr-3">&nbsp;</div>
+          </div>
+
+          <!-- keypad -->
+          <div class="grid grid-cols-5 gap-2">
+            <!-- row: functions -->
+            <button class="btn-safe px-3 py-2 rounded-lg bg-slate-700/60 hover:bg-slate-700/40" data-action="func" data-value="sin">sin</button>
+            <button class="btn-safe px-3 py-2 rounded-lg bg-slate-700/60 hover:bg-slate-700/40" data-action="func" data-value="cos">cos</button>
+            <button class="btn-safe px-3 py-2 rounded-lg bg-slate-700/60 hover:bg-slate-700/40" data-action="func" data-value="tan">tan</button>
+            <button class="btn-safe px-3 py-2 rounded-lg bg-slate-700/60 hover:bg-slate-700/40" data-action="func" data-value="log">log</button>
+            <button class="btn-safe px-3 py-2 rounded-lg bg-amber-500 text-slate-900 font-semibold" data-action="back">⌫</button>
+
+            <!-- row: numbers and ops -->
+            <button class="btn-safe px-3 py-2 rounded-lg bg-slate-600/50" data-action="const" data-value="pi">π</button>
+            <button class="btn-safe px-3 py-2 rounded-lg bg-slate-600/50" data-action="op" data-value="(">(</button>
+            <button class="btn-safe px-3 py-2 rounded-lg bg-slate-600/50" data-action="op" data-value=")">)</button>
+            <button class="btn-safe px-3 py-2 rounded-lg bg-slate-600/50" data-action="op" data-value="^">^</button>
+            <button class="btn-safe px-3 py-2 rounded-lg bg-red-600/90" data-action="clear">C</button>
+
+            <!-- numbers 7 8 9 / -->
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value="7">7</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value="8">8</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value="9">9</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="op" data-value="/">÷</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="func" data-value="sqrt">√</button>
+
+            <!-- numbers 4 5 6 * -->
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value="4">4</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value="5">5</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value="6">6</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="op" data-value="*">×</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="func" data-value="pow2">x²</button>
+
+            <!-- numbers 1 2 3 - -->
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value="1">1</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value="2">2</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value="3">3</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="op" data-value="-">−</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="func" data-value="inv">1/x</button>
+
+            <!-- 0 . = + -->
+            <button class="col-span-2 btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value="0">0</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="digit" data-value=".">.</button>
+            <button class="btn-safe px-3 py-4 rounded-lg bg-slate-700/40" data-action="op" data-value="+">+</button>
+            <button id="equals" class="btn-safe px-3 py-4 rounded-lg bg-emerald-500 text-slate-900 font-semibold">=</button>
+          </div>
+        </div>
+      </section>
+    
+
+  <script>
+    // Simple calculator engine
+    const display = document.getElementById('display');
+    const subDisplay = document.getElementById('subDisplay');
+    const historyEl = document.getElementById('history');
+    const equalsBtn = document.getElementById('equals');
+    const darkToggle = document.getElementById('darkToggle');
+    const clearHistoryBtn = document.getElementById('clearHistory');
+    const degBtn = document.getElementById('deg');
+    const radBtn = document.getElementById('rad');
+
+    let expr = '';
+    let mode = 'DEG';
+ 
+    function updateDisplay() {
+      display.textContent = expr || '0';
+      subDisplay.textContent = expr ? '' : '\u00A0';
+    }
+
+    function append(what) {
+      expr += what;
+      updateDisplay();
+    }
+
+    function clearAll() {
+      expr = '';
+      updateDisplay();
+    }
+
+    function backspace() {
+      expr = expr.slice(0, -1);
+      updateDisplay();
+    }
+
+    function pushHistory(line) {
+      historyEl.textContent = (historyEl.textContent ? historyEl.textContent + '\n' : '') + line;
+      historyEl.scrollTop = historyEl.scrollHeight;
+    }
+
+    function toRadians(v) { return v * Math.PI / 180; }
+    function toDegrees(v) { return v * 180 / Math.PI; }
+
+    function safeEval(input) {
+      // Map friendly tokens to JS Math
+      try {
+        let s = input
+          .replace(/π/g, 'Math.PI')
+          .replace(/÷/g, '/')
+          .replace(/×/g, '*')
+          .replace(/\^/g, '**')
+          .replace(/√\(/g, 'Math.sqrt(')
+          .replace(/sqrt\(/g, 'Math.sqrt(')
+          .replace(/ln\(/g, 'Math.log(')
+          .replace(/log\(/g, () => (Math.log10 ? "Math.log10(" : "Math.log("))
+
+        // handle functions sin cos tan with DEG/RAD
+        s = s.replace(/(sin|cos|tan)\(([^)]+)\)/g, function(_, fn, val){
+          return 'Math.'+fn+'(' + (mode==='DEG' ? toRadians(parseFloat(val)) : parseFloat(val)) + ')';
+        });
+
+        
+        s = s.replace(/(\d+)!/g, function(_, n){
+          let num = parseInt(n,10);
+          let res = 1;
+          for(let i=2;i<=num;i++) res *= i;
+          return res;
+        });
+
+     
+        const f = new Function('return (' + s + ');');
+        const res = f();
+        if (!isFinite(res)) throw new Error('Result not finite');
+        return res;
+      } catch (e) {
+        throw new Error('Invalid expression');
+      }
+    }
+
+    // Button handlers
+    document.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        const val = btn.dataset.value;
+        if (action === 'digit') append(val);
+        else if (action === 'op') append(val);
+        else if (action === 'clear') clearAll();
+        else if (action === 'back') backspace();
+        else if (action === 'func') {
+          if (val === 'sqrt') append('sqrt(');
+          else if (val === 'pow2') append('**2');
+          else if (val === 'inv') append('(1/(');
+          else append(val + '(');
+        }
+        else if (action === 'const') {
+          if (val === 'pi') append('π');
+        }
+      });
+    });
+
+    equalsBtn.addEventListener('click', () => {
+      try {
+        const result = safeEval(expr || '0');
+        pushHistory(expr + ' = ' + result);
+        expr = String(result);
+        updateDisplay();
+      } catch (e) {
+        display.textContent = 'Error';
+        subDisplay.textContent = e.message;
+      }
+    });
+
+    clearHistoryBtn.addEventListener('click', () => { historyEl.textContent = ''; });
+
+    // toggle dark (invert backgrounds) - simple
+    darkToggle.addEventListener('change', () => {
+      document.body.classList.toggle('bg-white');
+      document.body.classList.toggle('text-gray-900');
+      document.body.classList.toggle('dark-mode');
+    });
+
+ 
+    degBtn.addEventListener('click', () => { mode = 'DEG'; degBtn.classList.add('bg-slate-600/50'); radBtn.classList.remove('bg-slate-600/50'); });
+    radBtn.addEventListener('click', () => { mode = 'RAD'; radBtn.classList.add('bg-slate-600/50'); degBtn.classList.remove('bg-slate-600/50'); });
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.key >= '0' && e.key <= '9') || e.key === '.') { append(e.key); }
+      else if (e.key === 'Enter') { equalsBtn.click(); }
+      else if (e.key === 'Backspace') { backspace(); }
+      else if (['+','-','*','/','(',')','^'].includes(e.key)) { append(e.key); }
+      else if (e.key.toLowerCase() === 'c') { clearAll(); }
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>
